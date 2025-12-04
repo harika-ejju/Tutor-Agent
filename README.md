@@ -20,7 +20,3 @@
    cd backend
    python main.py
    ```
-
-## Important Security Note
-
-Never commit your actual API keys to the repository. The `.env` file is ignored by git to prevent this.
