@@ -4,7 +4,7 @@ import uuid
 import time
 import re
 import redis.asyncio as redis
-import httpx
+import requests
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -55,24 +55,32 @@ class ConnectionManager:
 manager = ConnectionManager()
 
 async def call_openai(prompt: str) -> str:
-    async with httpx.AsyncClient(timeout=30) as client:
-        headers = {
-            "Authorization": f"Bearer {OPENAI_API_KEY}",
-            "Content-Type": "application/json"
-        }
-        payload = {
-            "model": "gpt-3.5-turbo",
-            "messages": [{"role": "user", "content": prompt}],
-            "temperature": 0.7,
-            "max_tokens": 2000  
-        }
-        response = await client.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
-        if response.status_code == 200:
-            data = response.json()
-            return data["choices"][0]["message"]["content"]
-        else:
-            print(f"OpenAI API Error: {response.status_code} - {response.text}")
-            return "Sorry, I couldn't generate a response at the moment."
+    import asyncio
+    
+    headers = {
+        "Authorization": f"Bearer {OPENAI_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "model": "gpt-3.5-turbo",
+        "messages": [{"role": "user", "content": prompt}],
+        "temperature": 0.7,
+        "max_tokens": 2000  
+    }
+    
+    # Using requests instead of httpx for better deployment compatibility
+    response = await asyncio.to_thread(requests.post, 
+                                     "https://api.openai.com/v1/chat/completions",
+                                     headers=headers, 
+                                     json=payload,
+                                     timeout=30)
+    
+    if response.status_code == 200:
+        data = response.json()
+        return data["choices"][0]["message"]["content"]
+    else:
+        print(f"OpenAI API Error: {response.status_code} - {response.text}")
+        return "Sorry, I couldn't generate a response at the moment."
 
 async def handle_message(user_id: str, msg: dict, manager: ConnectionManager):
     print(f"Handling message for {user_id}: {msg}")
