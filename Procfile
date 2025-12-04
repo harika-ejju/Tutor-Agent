@@ -1,1 +1,1 @@
-web: python start_server.py
+web: ./start_app.sh
