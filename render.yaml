@@ -3,7 +3,9 @@ services:
     name: tutor-agent-backend
     runtime: python
     buildCommand: ./build.sh
-    startCommand: python wsgi.py
+    startCommand: python start_server.py
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
+      - key: PORT
+        sync: false
